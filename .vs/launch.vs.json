@@ -1,0 +1,16 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+        "type": "default",
+        "project": "toolkit\\build\\cmake\\CMakeLists.txt",
+        "projectTarget": "sisyphus.exe (bin\\sisyphus.exe)",
+        "name": "sisyphus.exe (bin\\sisyphus.exe)",
+        "currentDir": "Workdir",
+        "args": [
+            "testapp"
+        ]
+    }
+  ]
+}
