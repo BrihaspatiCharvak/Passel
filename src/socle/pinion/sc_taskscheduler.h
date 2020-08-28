@@ -1,7 +1,7 @@
 // sc_taskscheduler.h _____________________________________________________________________________________________________________
 #pragma once
   
-#include    "socle/coffer/sc_taskdiary.h"  
+#include    "socle/pinion/sc_taskdiary.h"  
 
 //_____________________________________________________________________________________________________________________________
 // Struct to setup  HeistSessions on CPUs and  provide them with common services
@@ -47,11 +47,11 @@ struct Cv_HiestQueue  : public Sc_TaskScheme
 
     TaskStk                 m_TaskIdStk;
     TaskStk                 m_TempStk;
-    Diary                   *m_Diary;           // diary for to all scheme in the 
+    Ledger                  *m_Diary;           // diary for to all scheme in the 
     TaskCache               m_TaskCache; 
     Spinlock                m_Spinlock;
 
-    bool            DoInit( Diary *diary)
+    bool            DoInit( Ledger *diary)
     {
         m_Diary = diary; 
         m_TaskCache.SetStore( diary->m_TaskStore);
@@ -64,7 +64,7 @@ struct Cv_HiestQueue  : public Sc_TaskScheme
     {  
         Spinlock::Guard         guard( &m_Spinlock); 
         if ( !m_TaskIdStk.SzStk())
-            return Diary::NullTask(); 
+            return Ledger::NullTask(); 
         return m_TaskIdStk.PopBack();    
     }
 
@@ -94,10 +94,9 @@ template < typename Rogue,  typename... Args>
         return taskId; 
     } 
     
-    void            Run( TaskId taskId, Cv_HeistSession *scheme) 
+    void            Run( TaskId taskId, Sc_TaskSession *scheme) 
     { 
-        Task        *task = m_TaskCache.GetAtFromId( taskId);
-        CV_SANITY_ASSERT( !task->SzPred())
+        Task        *task = m_TaskCache.GetAtFromId( taskId); 
         TaskId      succId = task->SuccId();
         task->DoWork( succId, scheme);
 
@@ -108,8 +107,7 @@ template < typename Rogue,  typename... Args>
                 EnqueueTask( succId);
         }
         
-        FlushTempTasks(); 
-        CV_SANITY_ASSERT( memset( ( void *) task, 0xCC, SzTask)) 
+        FlushTempTasks();  
         m_TaskCache.Discard( taskId);
         return;
     }
@@ -117,7 +115,7 @@ template < typename Rogue,  typename... Args>
  
 //_____________________________________________________________________________________________________________________________
 
-struct Cv_HeistSession  : public Cv_HiestQueue 
+struct Sc_TaskSession  : public Cv_HiestQueue 
 {
     Sc_Unit< uint64_t>       m_Worktime;         // record of useful time spent
     Sc_Unit< uint32_t>       m_Index;
@@ -125,11 +123,11 @@ struct Cv_HeistSession  : public Cv_HiestQueue
     Sc_Unit< uint32_t>       m_SzTaskRuns;
     std::thread             m_Thread;
 
-    Cv_HeistSession( void)
-        : m_Index( CV_UINT32_MAX), m_DoneFlg( false), m_SzTaskRuns( 0) 
+    Sc_TaskSession( void)
+        : m_Index( SC_UINT32_MAX), m_DoneFlg( false), m_SzTaskRuns( 0) 
     {} 
     
-    bool    DoInit( Diary *diary, uint32_t index)
+    bool    DoInit( Ledger *diary, uint32_t index)
     {
         m_Index = index; 
         Cv_HiestQueue::DoInit( diary);
@@ -160,10 +158,10 @@ struct Cv_HeistSession  : public Cv_HiestQueue
         {
             m_Diary->m_SzRuning.Incr();
             auto            taskId = PopTask();
-            if ( taskId == Diary::NullTask()) 
+            if ( taskId == Ledger::NullTask()) 
                 taskId = GrabTask();
             
-            if ( taskId != Diary::NullTask()) 
+            if ( taskId != Ledger::NullTask()) 
             {
                 m_SzTaskRuns.Incr();
                 Run( taskId);
@@ -208,7 +206,7 @@ struct Cv_HeistSession  : public Cv_HiestQueue
 
     bool            DoLaunch( void)
     {
-        m_Thread  = std::thread( &Cv_HeistSession::DoExecute, this); 
+        m_Thread  = std::thread( &Sc_TaskSession::DoExecute, this); 
         return true;
     }
 
@@ -217,49 +215,46 @@ struct Cv_HeistSession  : public Cv_HiestQueue
         m_Thread.join();
         return true;
     }
-
-    auto            Ops( uint16_t succ) 
-    {
-        return Cv_HeistOps< Cv_HeistSession>( succ, this);
-    }
+ 
 }; 
 
 //_____________________________________________________________________________________________________________________________
 
 struct Sc_TaskScheduler :  public Sc_TaskLedger
-{    
-    uint32_t                                    m_MxSession;
+{     
     uint32_t                                    m_LastGrab;
-    Cv_HeistSession                             m_Session; 
-    Cv_ArrStk< Cv_HeistSession *, MxThread>     m_HeistSessions;
+    Sc_TaskSession                              m_Session; 
+    Sc_AtmVec< Sc_TaskSession *>                m_HeistSessions;
     
     struct TaskLoadCmp
     {
-         bool    operator()( Cv_HeistSession *s1, Cv_HeistSession *s2) const
+         bool    operator()( Sc_TaskSession *s1, Sc_TaskSession *s2) const
             {   return s1->m_TaskIdStk.SzStk() > s2->m_TaskIdStk.SzStk(); }
     };
 
 public:
     Sc_TaskScheduler( uint32_t mxSession) 
-        : m_MxSession( mxSession), m_LastGrab( 0)
-    {} 
+        : m_LastGrab( 0)
+    {
+        m_HeistSessions.DoInit( mxSession +1); 
+    } 
 
     ~Sc_TaskScheduler( void)
     {
-        for ( uint32_t i = 0; i < m_MxSession; ++i)
-            delete m_HeistSessions[ i];
+        for ( uint32_t i = 0; i < m_HeistSessions.Size(); ++i)
+            delete m_HeistSessions.At( i);
     }
 
-    Cv_HeistSession  *CurSession( void) { return &m_Session; }    
+    Sc_TaskSession  *CurSession( void) { return &m_Session; }    
 
     bool            DoInit( void)
     {
-        bool    flg = Sc_TaskLedger::DoInit();
-        m_HeistSessions.IncrFill( m_MxSession +1);
-        for ( uint32_t i = 0; flg && ( i < m_HeistSessions.SzStk()); ++i)
+        bool    flg = Sc_TaskLedger::DoInit(); 
+        for ( uint32_t i = 0; flg && ( i < m_HeistSessions.Size()); ++i)
         {
-            m_HeistSessions[ i] = ( i < m_MxSession) ? new Cv_HeistSession() : &m_Session;
-            flg = m_HeistSessions[ i]->DoInit( this, i);
+            auto    *session = i < ( m_HeistSessions.Size() -1) ? new Sc_TaskSession() : &m_Session;
+            m_HeistSessions.PushBack( session);
+            flg = session->DoInit( this, i);
         }
         if ( !flg)
             return false;
@@ -271,7 +266,7 @@ public:
     {
         uint32_t        sz = m_HeistSessions.SzStk();
         for ( uint32_t i = 0; i < sz; ++i)
-            if ( m_HeistSessions[ i]->m_TaskIdStk.SzStk())
+            if ( m_HeistSessions.At( i)->m_TaskIdStk.SzStk())
                 return true;
         return false;
     }
@@ -281,7 +276,7 @@ public:
         uint32_t        sz = uint32_t( m_HeistSessions.SzStk());
         for ( uint32_t i = 0; i < sz; ++i, ++m_LastGrab)
         {
-            Cv_HeistSession  *scheme = m_HeistSessions[ m_LastGrab % sz]; 
+            Sc_TaskSession  *scheme = m_HeistSessions.At( m_LastGrab % sz); 
             if ( scheme->m_TaskIdStk.SzStk())
                 return scheme->PopTask();
         }
@@ -292,12 +287,12 @@ public:
     {  
         bool    flg = true; 
         for ( uint32_t i = 0; flg && ( i < ( m_HeistSessions.SzStk() -1)); ++i)
-            flg = m_HeistSessions[ i]->DoLaunch();
+            flg = m_HeistSessions.At( i)->DoLaunch();
         if ( !flg)
             return false;  
         m_Session.DoExecute(); 
         for ( uint32_t i = 0; flg && ( i < ( m_HeistSessions.SzStk() -1)); ++i)
-            m_HeistSessions[ i]->DoJoin();
+            m_HeistSessions.At( i)->DoJoin();
         return true;
     }
 
@@ -306,14 +301,14 @@ public:
 
 //_____________________________________________________________________________________________________________________________
 
-inline bool    Cv_HeistSession::IsTaskPending( void) const 
+inline bool    Sc_TaskSession::IsTaskPending( void) const 
 {
     return static_cast < Sc_TaskScheduler*>( m_Diary)->IsTaskPending(); 
 }
 
 //_____________________________________________________________________________________________________________________________
 
-inline Cv_HeistSession::TaskId          Cv_HeistSession::GrabTask( void) const
+inline Sc_TaskSession::TaskId          Sc_TaskSession::GrabTask( void) const
 { 
     return static_cast < Sc_TaskScheduler*>( m_Diary)->GrabTask(); 
 }

@@ -111,16 +111,19 @@ template < typename Iter, typename Lambda, typename... Args>
 
 //_____________________________________________________________________________________________________________________________
 
-template <  typename ArrFleck>
-struct  Sc_AtmVec : public Cv_FlockSlice< Sc_AtmVec< ArrFleck>, typename ArrFleck::Stor, typename ArrFleck::SzType, typename ArrFleck::Atm>
+template <  typename StorT, typename SzTypeT = uint32_t, typename AtmT = std::true_type>
+struct  Sc_AtmVec : public Cv_FlockSlice< Sc_AtmVec< StorT, SzTypeT, AtmT>, StorT, SzTypeT, AtmT>
 {     
-    typedef  typename ArrFleck::SzType          SzType;
-    typedef  typename ArrFleck::AtmSize         AtmSize;
-    typedef  typename ArrFleck::Stor            Stor;  
-    typedef  typename ArrFleck::AtmStor         AtmStor;   
+    typedef  Cv_FlockSlice< Sc_AtmVec< StorT, SzTypeT, AtmT>, StorT, SzTypeT, AtmT>        Base;
+
+    typedef  SzTypeT                                SzType;
+    typedef  StorT                                  Stor;  
+    typedef  typename Base::AtmSize                 AtmSize;
+    typedef  typename Base::AtmStor                 AtmStor; 
+    typedef  Sc_AtmArr< Stor, SzType, AtmT>         AtmArr;  
 
     AtmSize         m_StkSz;
-    ArrFleck        m_ArrFleck;
+    AtmArr          m_ArrFleck;
     
 public:
     Sc_AtmVec( void)

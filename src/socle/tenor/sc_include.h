@@ -57,12 +57,51 @@
 
 //---------------------------------------------------------------------------------------------------------------------------------
 
+constexpr uint8_t       SC_UINT8_MAX = uint8_t( -1);
+constexpr uint16_t      SC_UINT16_MAX = uint16_t( -1);
+constexpr uint32_t      SC_UINT32_MAX = uint32_t( -1);
+constexpr uint64_t      SC_UINT64_MAX = uint64_t( -1); 
+ 
+//---------------------------------------------------------------------------------------------------------------------------------
+
 struct Sc_ErrorCntl
 {
 
     bool ErrorTrap( const char *file, uint32_t line);
 };
-
  
+//---------------------------------------------------------------------------------------------------------------------------------
+ 
+#define SC_ERROR_ASSERT( x)                                                                 \
+{                                                                                           \
+    if ( ! ( x))                                                                            \
+        Sc_ErrorCntl::ErrorTrap(__FILE__, __LINE__);                                         \
+}
+
+
+#ifdef SC_DEBUG 
+#define SC_DEBUG_ASSERT( x)                                                                 \
+{                                                                                           \
+    if ( ! ( x))                                                                            \
+        Sc_ErrorCntl::ErrorTrap(__FILE__, __LINE__);                                         \
+}
+#else
+#define SC_DEBUG_ASSERT( x) {}
+#endif
+
+#ifdef SC_SANITY 
+
+#define SC_SANITY_ASSERT( x )                                                                \
+{                                                                                           \
+    if ( ! ( x))                                                                            \
+        Sc_ErrorCntl::ErrorTrap(__FILE__, __LINE__);                                         \
+}
+   
+#else
+   
+#define SC_SANITY_ASSERT( x) {}
+
+#endif
+
 //---------------------------------------------------------------------------------------------------------------------------------
   

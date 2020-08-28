@@ -6,6 +6,7 @@
 #include    "socle/coffer/sc_atmtrail.h" 
 #include    "socle/coffer/sc_atmarray.h" 
 #include    "socle/coffer/sc_freestore.h" 
+#include    "socle/pinion/sc_taskscheduler.h" 
 
 //---------------------------------------------------------------------------------------------------------------------------------
 
@@ -30,8 +31,11 @@ int main( int argc, char *argv[])
 int testapp( int argc, char *argv[])
 {
     Sc_AtmArr<uint32_t>                                 arr;
+    Sc_AtmVec<uint32_t>                                 vec;
+    vec.PushBack( 20);
+    uint32_t    t = vec.PopBack();
     Sc_AtmTrail< uint32_t, uint32_t, std::true_type>  trail;
-    Sc_TaskScheduler                        scheduler( 4);
+  //  Sc_TaskScheduler                        scheduler( 4);
 
     return 0;
 }

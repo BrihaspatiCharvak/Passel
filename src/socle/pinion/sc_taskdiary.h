@@ -48,9 +48,9 @@ struct Sc_TaskScheme
         void                Ship( void) { return ; }
     };
 
-    typedef Sc_FreeStore< Task, uint16_t, MaxTask, SzTask>    TaskStore;
+    typedef Sc_FreeStore< Task, uint16_t, MaxTask, SzTask>          TaskStore;
     typedef Sc_FreeCache< 256, TaskStore>                           TaskCache;
-    typedef Sc_AtmVec< Sc_AtmArr< TaskId>>                          TaskStk; 
+    typedef Sc_AtmVec< TaskId>                                      TaskStk; 
 
     typedef Sc_Spinlock< std::true_type>                            Spinlock;
  

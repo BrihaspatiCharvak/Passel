@@ -14,7 +14,7 @@ struct Sc_BaseStore
     typedef std::true_type                      Atomic;
     typedef StorT                               Stor;
     typedef X                                   Type; 
-    typedef Sc_AtmVec< Sc_AtmArr< Stor>>        ObjStack;                               
+    typedef Sc_AtmVec<  Stor>                   ObjStack;                               
                                  
     ObjStack                        m_Store;                                // Stack of free Indexes into Page at each object location
     Sc_Spinlock<Atomic>             m_Lock;                                 // SpinLock to be used for concurrent access   
@@ -72,14 +72,14 @@ struct Sc_FreeStore : public Sc_BaseStore< Sc_FreeStore< X, DStor, Mx,  ObjSz>, 
     
     X           *GetAt( DStor id) const                              // get pointer for index
     { 
-        CV_SANITY_ASSERT( id < Mx)
+        SC_SANITY_ASSERT( id < Mx)
         return reinterpret_cast< X *>( const_cast< uint8_t *>( &m_Page[ id * ObjSz])); 
     }
     
     DStor        MapId( const X *x) const                                // get index for pointer
     {   
         uint64_t        id( ( reinterpret_cast< const uint8_t *>( x) - m_Page) /ObjSz);
-        CV_SANITY_ASSERT( id < Mx)
+        SC_SANITY_ASSERT( id < Mx)
         return DStor( id); 
     } 
 };
@@ -94,7 +94,7 @@ struct Sc_FreeCache
     typedef  typename Store::Stor                   Stor;
     typedef  typename Store::Atomic                 Atomic;
     typedef  typename Sc_Spinlock<Atomic>::Guard    Guard;
-    typedef Sc_AtmVec< Sc_AtmArr< Stor>>          CacheStack;
+    typedef Sc_AtmVec< Stor>                        CacheStack;
     
     Store                       *m_FreeStore;
     CacheStack                  m_CacheStore;
@@ -150,7 +150,7 @@ struct Sc_FreeCache
         Stor    id = AllocId();
 //        CV_ERROR_ASSERT( !m_Bits[ id] && (( m_Bits[ id] = true)))
         Type    *x = m_FreeStore->GetAt( id); 
-        CV_SANITY_ASSERT( x->SetStoreId( m_FreeStore->m_StoreId))
+        SC_SANITY_ASSERT( x->SetStoreId( m_FreeStore->m_StoreId))
         return  x; 
     } 
     
@@ -167,7 +167,7 @@ struct Sc_FreeCache
     
     void    Discard( void *x) 
     {
-        CV_SANITY_ASSERT( x->StoreId() == m_FreeStore->m_StoreId)
+        SC_SANITY_ASSERT( x->StoreId() == m_FreeStore->m_StoreId)
         //memset( x, 0xCC, Store::ObjSz);
         Discard( m_FreeStore->MapId( x)); 
     }    // Discard an object

@@ -132,7 +132,7 @@ public:
     
     SzType          PushBack( Stor d)  
     {   
-        CV_SANITY_ASSERT( SzStk()  < SzMax())
+        SC_SANITY_ASSERT( SzStk()  < SzMax())
         SzType  ind = AtmCount()->Incr() -1;
         this->SetAt( ind, d);  
         return ind;
