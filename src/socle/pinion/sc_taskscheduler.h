@@ -1,9 +1,9 @@
-// sc_taskscheduler.h _____________________________________________________________________________________________________________
+// sc_taskscheduler.h -------------------------------------------------------------------------------------------------------------
 #pragma once
   
 #include    "socle/pinion/sc_taskdiary.h"  
 
-//_____________________________________________________________________________________________________________________________
+//---------------------------------------------------------------------------------------------------------------------------------
 // Struct to setup  HeistSessions on CPUs and  provide them with common services
 
 struct Sc_TaskLedger  : public Sc_TaskScheme
@@ -39,12 +39,10 @@ struct Sc_TaskLedger  : public Sc_TaskScheme
     void            SetOStrm( std::ostream *pOStrm) { m_OStrmPtr = pOStrm; }
 };
  
-//_____________________________________________________________________________________________________________________________
- 
-struct Cv_HiestQueue  : public Sc_TaskScheme
-{    
-    //__________________________________________________________________________________________________________________________
+//---------------------------------------------------------------------------------------------------------------------------------
 
+struct Cv_TaskQueue  : public Sc_TaskScheme
+{      
     TaskStk                 m_TaskIdStk;
     TaskStk                 m_TempStk;
     Ledger                  *m_Diary;           // diary for to all scheme in the 
@@ -86,7 +84,7 @@ template < typename Rogue,  typename... Args>
         if ( succId) 
             m_TaskCache.GetAtFromId( succId)->RaiseSzPred(); 
         uint32_t        sz = m_TaskCache.ProbeSzFree();         
-        CV_ERROR_ASSERT( sz && ( m_TaskIdStk.Size() != m_TaskIdStk.SzStk()))         // Too many tasks..
+        SC_ERROR_ASSERT( sz && ( m_TaskIdStk.Size() != m_TaskIdStk.SzStk()))         // Too many tasks..
         TaskId      taskId = m_TaskCache.AllocId();
         Task        *task = MakeTask( m_TaskCache.GetAtFromId( taskId), rogue, args...);  
         
@@ -115,7 +113,7 @@ template < typename Rogue,  typename... Args>
  
 //_____________________________________________________________________________________________________________________________
 
-struct Sc_TaskSession  : public Cv_HiestQueue 
+struct Sc_TaskSession  : public Cv_TaskQueue 
 {
     Sc_Unit< uint64_t>       m_Worktime;         // record of useful time spent
     Sc_Unit< uint32_t>       m_Index;
@@ -130,7 +128,7 @@ struct Sc_TaskSession  : public Cv_HiestQueue
     bool    DoInit( Ledger *diary, uint32_t index)
     {
         m_Index = index; 
-        Cv_HiestQueue::DoInit( diary);
+        Cv_TaskQueue::DoInit( diary);
         return true;
     }  
 
@@ -148,7 +146,7 @@ struct Sc_TaskSession  : public Cv_HiestQueue
     void            Run( TaskId taskId) 
     { 
         auto    val = m_Diary->m_SeqSC.Get() +m_Index.Get();
-        Cv_HiestQueue::Run( taskId, this); 
+        Cv_TaskQueue::Run( taskId, this); 
         m_Diary->m_SeqSC.SetSC( val);
     }
 

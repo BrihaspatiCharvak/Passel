@@ -67,7 +67,7 @@ constexpr uint64_t      SC_UINT64_MAX = uint64_t( -1);
 struct Sc_ErrorCntl
 {
 
-    bool ErrorTrap( const char *file, uint32_t line);
+    static bool ErrorTrap( const char *file, uint32_t line);
 };
  
 //---------------------------------------------------------------------------------------------------------------------------------

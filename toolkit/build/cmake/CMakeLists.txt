@@ -96,7 +96,7 @@ add_library( socle STATIC ${PS_SOCLE_SOURCES} )
 #____________________________________________________________________________________________________________________________
  
 # Create the sisyphus executable
-add_executable( sisyphus ${SOURCE_PATH}sisyphus/sp_console.cpp)
+add_executable( sisyphus ${SOURCE_PATH}sisyphus/sc_console.cpp)
 target_link_libraries( sisyphus    socle ${THRDPTY_LIBS}   ${EIGENLIB} )
 target_compile_features( sisyphus PRIVATE cxx_std_17)
 
