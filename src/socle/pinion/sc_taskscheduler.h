@@ -239,7 +239,7 @@ public:
 
     ~Sc_TaskScheduler( void)
     {
-        for ( uint32_t i = 0; i < m_HeistSessions.Size(); ++i)
+        for ( uint32_t i = 1; i < m_HeistSessions.SzStk(); ++i)
             delete m_HeistSessions.At( i);
     }
 
@@ -250,7 +250,7 @@ public:
         bool    flg = Sc_TaskLedger::DoInit(); 
         for ( uint32_t i = 0; flg && ( i < m_HeistSessions.Size()); ++i)
         {
-            auto    *session = i < ( m_HeistSessions.Size() -1) ? new Sc_TaskSession() : &m_Session;
+            auto    *session = i ? new Sc_TaskSession() : &m_Session;
             m_HeistSessions.PushBack( session);
             flg = session->DoInit( this, i);
         }
@@ -271,7 +271,7 @@ public:
 
     TaskId          GrabTask( void)   
     { 
-        uint32_t        sz = uint32_t( m_HeistSessions.SzStk());
+        uint32_t        sz =  m_HeistSessions.SzStk();
         for ( uint32_t i = 0; i < sz; ++i, ++m_LastGrab)
         {
             Sc_TaskSession  *scheme = m_HeistSessions.At( m_LastGrab % sz); 
@@ -284,12 +284,12 @@ public:
     bool    DoLaunch( void)
     {  
         bool    flg = true; 
-        for ( uint32_t i = 0; flg && ( i < ( m_HeistSessions.SzStk() -1)); ++i)
+        for ( uint32_t i = 1; flg && ( i <  m_HeistSessions.SzStk()); ++i)
             flg = m_HeistSessions.At( i)->DoLaunch();
         if ( !flg)
             return false;  
         m_Session.DoExecute(); 
-        for ( uint32_t i = 0; flg && ( i < ( m_HeistSessions.SzStk() -1)); ++i)
+        for ( uint32_t i = 1; flg && ( i < m_HeistSessions.SzStk()); ++i)
             m_HeistSessions.At( i)->DoJoin();
         return true;
     }

@@ -49,17 +49,16 @@ int testapp( int argc, char *argv[])
 int mergeapp( int argc, char *argv[])
 { 
     typedef Sc_Value< int32_t>      Value;
-
+    
     Value	                input[] = {5,10,15,20,25,50,40,30,20,10,9524,878,17,1,-99,18785,3649,-3,164,94};
     constexpr  uint32_t     Sz = sizeof( input)/ sizeof( Value); 
 
     Value		            output[ Sz]; 
-    Value		    aux[ Sz]; 
-    Sc_TaskScheduler        scheduler( 0);
+    Value		            aux[ Sz]; 
+    Sc_TaskScheduler        scheduler( 4);
     scheduler.DoInit();
     {
-        Sc_TaskSession          *queue = scheduler.CurSession();
-    
+        Sc_TaskSession      *queue = scheduler.CurSession(); 
  
         auto	            ms = Sc_Sort::MergeSort(  input, Sz, output, aux, Value::Less()); 
         queue->EnqueueTask( queue->Construct( Sc_TaskScheduler::NullTask(), ms));   
