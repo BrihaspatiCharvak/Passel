@@ -4,6 +4,7 @@
 #include    "sisyphus/sc_apptools.h"
 #include    "socle/stash/sc_value.h" 
 #include    "socle/stash/sc_mergesort.h" 
+#include    "socle/stash/sc_sorter.h"
 #include    "socle/coffer/sc_atmunit.h"
 #include    "socle/coffer/sc_atmtrail.h" 
 #include    "socle/coffer/sc_atmarray.h" 
@@ -16,6 +17,7 @@ Sc_Stack< Sc_AppletItem>     Sc_AppletItem::s_Singleton;
 
 SC_MAINAPPLET( testapp)
 SC_MAINAPPLET( mergeapp)
+SC_MAINAPPLET( sorter)
 
 //---------------------------------------------------------------------------------------------------------------------------------
 
@@ -71,5 +73,19 @@ int mergeapp( int argc, char *argv[])
     return 0;
 }
  
- 
+
+//---------------------------------------------------------------------------------------------------------------------------------
+
+int sorter( int argc, char *argv[])
+{ 
+    typedef int32_t         Value;
+
+    Value	                input[] = {5,10,15,20,25,50,40,30,20,10,9524,878,17,1,-99,18785,3649,-3,164,94};
+    constexpr  uint32_t     Sz = sizeof( input)/ sizeof( Value); 
+    
+    //Sc_Sorter< Value * * >    sorter( &input);
+
+    return 0;
+}
+
 //---------------------------------------------------------------------------------------------------------------------------------

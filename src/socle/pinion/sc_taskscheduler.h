@@ -113,7 +113,6 @@ template < typename Rogue,  typename... Args>
  
 //---------------------------------------------------------------------------------------------------------------------------------
 
-
 struct Sc_TaskSession  : public Cv_TaskQueue 
 {
     Sc_Unit< uint64_t>       m_Worktime;         // record of useful time spent
@@ -138,11 +137,9 @@ struct Sc_TaskSession  : public Cv_TaskQueue
  
     uint32_t        Index( void) const { return m_Index.Get(); } 
     
-    bool            IsTaskPending( void) const;
-
-     
-    
-    TaskId        GrabTask( void) const;
+    bool            IsTaskPending( void) const; 
+      
+    TaskId          GrabTask( void) const;
     
     void            Run( TaskId taskId) 
     { 
@@ -218,8 +215,7 @@ struct Sc_TaskSession  : public Cv_TaskQueue
 }; 
 
 //---------------------------------------------------------------------------------------------------------------------------------
-
-
+ 
 struct Sc_TaskScheduler :  public Sc_TaskLedger
 {     
     uint32_t                                    m_LastGrab;
