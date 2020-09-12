@@ -3,58 +3,50 @@
 
 //---------------------------------------------------------------------------------------------------------------------------------
 
-template < typename Cltn, typename SzType = size_t>
-struct Sc_Sorter
-{
-	Cltn	*m_Cltn;
-
-	Sc_Sorter( Cltn	*cltn)
-		: m_Cltn( cltn)
-	{}
-
-template <typename T>	
-	static bool IsKeyLess( SzType i,  SzType j)	
+struct Sc_Sort
+{ 
+template < typename Cltn, typename SzType>
+	static auto IsKeyLess( void)	
 	{
-		return (*m_Cltn)[ i] < (*m_Cltn)[ j];
+		return []( const Cltn &cltn, SzType i,  SzType j) {
+			return cltn[ i] < cltn[ j];
+		};
 	}
 
-template <typename T>	
-	static void KeyAssign( SzType i,  SzType j)	
+template < typename Cltn, typename SzType>
+	static auto KeyAssign( void)
 	{
-		return (*m_Cltn)[ i] = (*m_Cltn)[ j];
+		return []( Cltn &cltn, SzType i, SzType j) {
+			return cltn[ i] = cltn[ j];
+		};
 	}
-
-template <typename IsKeyLess, typename AssignKey>
-	void InsertionSort( SzType left, SzType right) 
+ 
+template <typename Cltn, typename IsKeyLess, typename AssignKey, typename SzType>
+	static void InsertionSort(  Cltn &cltn, SzType left, SzType right, const IsKeyLess  &keyLessFn, const AssignKey &assignKeyFn) 
 	{  
-		for (SzType i = left+1; i <= right; i++) 
+		for ( SzType i = left+1; i <= right; i++) 
 		{  
 			SzType	j = i -1;  
-			while (( j >= left) && IsKeyLess( i, j)) 
+			while (( j >= left) && keyLessFn( cltn, i, j)) 
 			{ 
-				KeyAssign( j +1, j); 
+				assignKeyFn( cltn, j +1, j); 
 				j = j-1; 
 			} 
-			KeyAssign( j +1, i); 
+			assignKeyFn( cltn, j +1, i); 
 		} 
 		return;
+	}
+
+template <typename Cltn, typename SzType>
+	static void InsertionSort(  Cltn &cltn, SzType left, SzType right) 
+	{
+		InsertionSort( cltn, left, right, IsKeyLess< Cltn, SzType>(), KeyAssign< Cltn, SzType>());
 	}
 };
 
 //---------------------------------------------------------------------------------------------------------------------------------
-#ifdef ZERO
+//#ifdef ZERO
 
-
-/* A Program to sort the array using Introsort. 
-* 
-* 
-* 
-The most popular C++ STL Algorithm- sort() ses Introsort. */
- 
-using namespace std; 
-
-// A utility function to swap the values pointed by 
-// the two pointers 
 void swapValue(int *a, int *b) 
 { 
 	int *temp = a; 
@@ -106,10 +98,10 @@ int* Partition(int arr[], int low, int high)
 			// increment index of smaller element 
 			i++; 
 
-			swap(arr[i], arr[j]); 
+			std::swap(arr[i], arr[j]); 
 		} 
 	} 
-	swap(arr[i + 1], arr[high]); 
+	std::swap(arr[i + 1], arr[high]); 
 	return (arr + i + 1); 
 } 
 
@@ -155,8 +147,8 @@ void IntrosortUtil(int arr[], int * begin,
 	// If the depth is zero use heapsort 
 	if (depthLimit == 0) 
 	{ 
-		make_heap(begin, end+1); 
-		sort_heap(begin, end+1); 
+		std::make_heap(begin, end+1); 
+		std::sort_heap(begin, end+1); 
 		return; 
 	} 
 
@@ -194,18 +186,4 @@ for (int i=0; i < n; i++)
 printf("\n"); 
 } 
 
-// Driver program to test Introsort 
-int main() 
-{ 
-	int arr[] = {3, 1, 23, -9, 233, 23, -313, 32, -9}; 
-	int n = sizeof(arr) / sizeof(arr[0]); 
-
-	// Pass the array, the pointer to the first element and 
-	// the pointer to the last element 
-	Introsort(arr, arr, arr+n-1); 
-	printArray(arr, n); 
-
-	return(0); 
-} 
-
-#endif
+//#endif

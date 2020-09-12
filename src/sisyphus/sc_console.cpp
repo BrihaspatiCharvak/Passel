@@ -61,7 +61,7 @@ int mergeapp( int argc, char *argv[])
     {
         Sc_TaskSession      *queue = scheduler.CurSession(); 
  
-        auto	            ms = Sc_Sort::MergeSort(  input, Sz, output, aux, Value::Less()); 
+        auto	            ms = Sc_MSort::MergeSort(  input, Sz, output, aux, Value::Less()); 
         queue->EnqueueTask( queue->Construct( Sc_TaskScheduler::NullTask(), ms));   
     
         scheduler.DoLaunch();
@@ -73,17 +73,31 @@ int mergeapp( int argc, char *argv[])
     return 0;
 }
  
-
 //---------------------------------------------------------------------------------------------------------------------------------
 
 int sorter( int argc, char *argv[])
 { 
+    int arr[] = {3, 1, 23, -9, 233, 23, -313, 32, -9}; 
+    int n = sizeof(arr) / sizeof(arr[0]); 
+
+    // Pass the array, the pointer to the first element and 
+    // the pointer to the last element 
+    Introsort(arr, arr, arr+n-1); 
+    printArray(arr, n); 
+
+    return(0); 
+} 
+
+//---------------------------------------------------------------------------------------------------------------------------------
+
+int sorter1( int argc, char *argv[])
+{ 
     typedef int32_t         Value;
 
     Value	                input[] = {5,10,15,20,25,50,40,30,20,10,9524,878,17,1,-99,18785,3649,-3,164,94};
-    constexpr  uint32_t     Sz = sizeof( input)/ sizeof( Value); 
+    uint32_t                sz = sizeof( input)/ sizeof( Value); 
     
-    //Sc_Sorter< Value * * >    sorter( &input);
+    Sc_Sort::InsertionSort( input, uint32_t( 0), sz);
 
     return 0;
 }

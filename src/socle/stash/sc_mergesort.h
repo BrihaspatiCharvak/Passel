@@ -3,7 +3,7 @@
    
 //_____________________________________________________________________________________________________________________________
 
-struct Sc_Sort
+struct Sc_MSort
 {  
     //_____________________________________________________________________________________________________________________________
 
@@ -47,13 +47,13 @@ struct Sc_Sort
 		 
 		    uint32_t	split = m_Size /2; 
 
-		    auto	    msMerge = Sc_Sort::Merge( m_OutIt, m_AuxIt, split, m_Size, m_Pred); 
+		    auto	    msMerge = Merge( m_OutIt, m_AuxIt, split, m_Size, m_Pred); 
             auto        mergeTask = queue->Construct( succ, msMerge);   
                
-            auto	    msLow = Sc_Sort::MergeSort( m_InpIt,  split, m_OutIt,  m_AuxIt, m_Pred); 
+            auto	    msLow = MergeSort( m_InpIt,  split, m_OutIt,  m_AuxIt, m_Pred); 
             queue->EnqueueTask( queue->Construct( mergeTask, msLow));    
 
-            auto	    msHigh = Sc_Sort::MergeSort( m_InpIt+split, m_Size-split, m_OutIt+split,  m_AuxIt+split, m_Pred);
+            auto	    msHigh = MergeSort( m_InpIt+split, m_Size-split, m_OutIt+split,  m_AuxIt+split, m_Pred);
 		    queue->EnqueueTask( queue->Construct( mergeTask, msHigh));  
 	    }
  
