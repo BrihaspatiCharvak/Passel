@@ -22,13 +22,11 @@ public:
         return ostr;
     }
 
-    struct Less
-    {
-        bool    operator()( const Sc_Value &t1, const Sc_Value &t2) const
-        { 
-            return t1.m_Value < t2.m_Value;
-        }
-    };
+    bool    operator<( const Sc_Value &t2) const
+    { 
+        return m_Value < t2.m_Value;
+    }
+    
 };
 
 //---------------------------------------------------------------------------------------------------------------------------------

@@ -9,7 +9,7 @@
         "name": "sisyphus.exe (bin\\sisyphus.exe)",
         "currentDir": "Workdir",
         "args": [
-            "mergeapp"
+                "mergeapp"
         ]
     }
   ]

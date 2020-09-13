@@ -1,120 +1,170 @@
 // sc_splitsort.h -------------------------------------------------------------------------------------------------------------------
 #pragma once
+   
+//_____________________________________________________________________________________________________________________________
 
-//---------------------------------------------------------------------------------------------------------------------------------
+struct Sc_Order
+{  
+    
 
+    //_____________________________________________________________________________________________________________________________
 
-//---------------------------------------------------------------------------------------------------------------------------------
-// Stable, non-recursive mergesort algorithm. Sort a[:n], using temporary space of size n starting at tmp. 
-
-template <typename T, typename IsLess, typename SzType = size_t>
-class Sc_SplitSort
-{
-public:
-    void MergeSort( T *a, SzType n, T* tmp, IsLess is_less) 
+template < typename InpIt, typename OutIt, typename Pred > 
+    struct StableSorter 
     {
-        for (SzType f = 1; f < n; f += 2)                           // Unfold the first pass for speedup.
-        { 
-            if (is_less(a[f], a[f - 1])) 
-            {
-                T   t = a[f];
-                a[ f] = a[f - 1];
-                a[ f - 1] = t;
-            }
-        }
-        bool    s = false;
-        for ( SzType p = 2; p != 0 && p < n; p <<= 1, s = !s) 
-        {
-            // Now all sublists of p are already sorted.
-            T       *z = tmp;
-            for ( SzType i = 0; i < n; i += p << 1) 
-            {
-                T       *x = a + i;
-                T       *y = x + p;
-                SzType  xn = p < n - i ? p : n - i;
-                SzType  yn = (p << 1) < n - i ? p : p < n - i ? n - p - i : 0;
-                if (xn > 0 && yn > 0 && is_less( *y, x[xn - 1]))    // Optimization (S), Java 1.6 also has it.
-                {  
-                    for (;;) 
-                    {
-                        if ( is_less(*y, *x)) 
-                        {
-                            *z++ = *y++;
-                            if (--yn == 0) 
-                                break;
-                        }
-                        else 
-                        {
-                            *z++ = *x++;
-                            if (--xn == 0) 
-                                break;
-                        }
-                    }
-                }
-                while (xn > 0)                                      // Copy from *x first because of (S).
-                {
-                    *z++ = *x++;
-                    --xn;
-                }
-                while (yn > 0) 
-                {
-                    *z++ = *y++;
-                    --yn;
-                }
-            }
-            z = a; a = tmp; tmp = z;
-        }
-        if (s)                                                      // Copy from tmp to result.
-        {
-            for (T* x = tmp, *y = a, * const x_end = tmp + n; x != x_end; ++x, ++y) 
-                *x = *y;            
-        }
-    }
+	    typedef	decltype( *std::declval<OutIt>()) 	            DeRef;  
+	    typedef typename std::remove_reference< DeRef>::type	Value;  
+ 
+        Pred        m_Pred;
+	    InpIt	    m_InpIt;
+	    OutIt	    m_OutIt;
+	    uint32_t    m_Size;
 
-    // Stable, non-recursive MergeSort.
-    // To sort vector `a', call MergeSort(a.data(), a.data() + a.size(), is_less)'
-    // or use the convenience function below.
-template <typename T, typename IsLess>
-    void MergeSort( T* a, T *a_end, IsLess is_less) 
+	    //_________________________________________________________________________________________________________________________
+
+	    StableSorter( InpIt inpIt, uint32_t sz, OutIt outIt, const Pred &pred)
+		    : m_Pred( pred), m_InpIt( inpIt), m_OutIt( outIt), m_Size( sz)
+	    {}
+ 
+	    //_________________________________________________________________________________________________________________________
+
+template < typename TaskQueue, typename ErrandId = typename TaskQueue::ErrandId>
+	    void    operator()( ErrandId succ, TaskQueue *queue) const
+        {
+            //CV_FNTRACE(())
+
+            std::copy( m_InpIt, m_InpIt+m_Size, m_OutIt);
+            std::stable_sort( m_OutIt, m_OutIt+m_Size, m_Pred);
+        }  
+    };
+ 
+    
+template < typename OutIt, typename Pred > 
+	struct Merger 
     {
-        const SzType        n = a_end - a;
-        if (n < 2) 
+        typedef	decltype(*std::declval<OutIt>()) 	            DeRef;  
+	    typedef typename std::remove_reference< DeRef>::type	Value;  
+         
+        Pred        m_Pred;
+        OutIt       m_DataIt; 
+        OutIt       m_AuxIt; 
+        uint32_t    m_Split;
+        uint32_t    m_Size;
+    
+        Merger(  OutIt dataIt, OutIt auxIt, uint32_t split, uint32_t sz, const Pred &pred)
+            : m_Pred( pred), m_DataIt( dataIt), m_AuxIt( auxIt), m_Split( split), m_Size( sz)
+        {}
+
+template < typename TaskQueue, typename ErrandId = typename TaskQueue::ErrandId>
+	    void    operator()( ErrandId succ, TaskQueue *queue) const
+        {
+            //CV_FNTRACE(())
+
+            OutIt   data1End = m_DataIt + m_Split;
+            OutIt   data2End = m_DataIt + m_Size;
+
+            OutIt   data1It = m_DataIt;
+            OutIt   data2It = data1End;
+            OutIt   auxIt = m_AuxIt;
+
+            for ( ; ( data1It < data1End) && ( data2It < data2End); ++auxIt)
+                *auxIt = m_Pred( *data1It, *data2It) ? *data1It++ : *data2It++;
+            for ( ; ( data1It < data1End); ++auxIt, ++data1It)
+                *auxIt = *data1It;
+            for ( ; ( data2It < data2End); ++auxIt, ++data2It)
+                 *auxIt = *data2It;
+
+            for ( OutIt dataIt = m_DataIt, auxIt = m_AuxIt; dataIt <  data2End; ++dataIt, ++auxIt)
+                *dataIt = *auxIt;
+             
             return;
-        // Creating ptr_deleter so tmp will be deleted even if is_less or
-        // MergeSort throws an exception.
-        struct ptr_deleter 
-        {
-            T* p_;
+        }   
+    };
 
-            ptr_deleter(T* p) 
-              : p_(p) 
-            {}
-            ~ptr_deleter() 
-            { 
-                delete p_; 
+
+template < typename OutIt, typename Pred> 
+	static auto	Merge(  OutIt dataIt, OutIt auxIt, uint32_t split, uint32_t sz, const Pred &pred)
+    {
+    	return Merger( dataIt, auxIt, split, sz, pred);	
+	}
+
+template < typename InpIt, typename OutIt, typename Pred> 
+	static auto	StableSort( InpIt inpIt, uint32_t sz, OutIt outIt, const Pred &pred)
+	{
+		return StableSorter( inpIt, sz, outIt, pred);	
+	}
+
+template < typename InpIt, typename OutIt> 
+	static auto	StableSort( InpIt inpIt, uint32_t sz, OutIt outIt)
+	{
+        typedef	decltype(*std::declval<InpIt>()) 	            DeRef;  
+	    typedef typename std::remove_reference< DeRef>::type	Value; 
+		return StableSort( inpIt, sz, outIt, std::less< Value>());	
+	}
+
+
+    //_____________________________________________________________________________________________________________________________
+
+    template < typename InpIt, typename OutIt, typename Pred> 
+    struct MergeSorter 
+    {
+        typedef	decltype(*std::declval<OutIt>()) 	            DeRef;  
+        typedef typename std::remove_reference< DeRef>::type	Value;  
+
+        InpIt	    m_InpIt;
+        OutIt	    m_OutIt;
+        OutIt	    m_AuxIt;
+        Pred        m_Pred;
+        uint32_t    m_Size;
+
+        //_________________________________________________________________________________________________________________________
+
+        MergeSorter( InpIt inpIt, uint32_t sz, OutIt outIt, OutIt auxIt, const Pred &pred)
+            : m_InpIt( inpIt), m_OutIt( outIt), m_AuxIt( auxIt), m_Pred( pred), m_Size( sz)
+        {}
+
+        //_________________________________________________________________________________________________________________________
+
+        template < typename TaskQueue, typename ErrandId = typename TaskQueue::ErrandId>
+        void    operator()( ErrandId succ, TaskQueue *queue) const
+        {  
+
+             
+            if ( ( m_Size <= 1024))
+            {  
+                auto    ss = StableSort( m_InpIt, m_Size, m_OutIt,m_Pred);   
+                ss( succ, queue);
+                return;
             }
-        } tmp( new T[n]);
-        MergeSort(a, n, tmp.p_, is_less);
+
+            uint32_t	split = m_Size /2; 
+
+            auto	    msMerge = Merge( m_OutIt, m_AuxIt, split, m_Size, m_Pred); 
+            auto        mergeTask = queue->Construct( succ, msMerge);   
+
+            auto	    msLow = SplitSort( m_InpIt,  split, m_OutIt,  m_AuxIt, m_Pred); 
+            queue->EnqueueTask( queue->Construct( mergeTask, msLow));    
+
+            auto	    msHigh = SplitSort( m_InpIt+split, m_Size-split, m_OutIt+split,  m_AuxIt+split, m_Pred);
+            queue->EnqueueTask( queue->Construct( mergeTask, msHigh));  
+        }
+
+        //_________________________________________________________________________________________________________________________ 
+    };
+
+template < typename InpIt, typename OutIt, typename Pred> 
+    static auto	SplitSort( InpIt inpIt, uint32_t sz, OutIt outIt, OutIt auxIt, const Pred &pred)
+    {
+        return MergeSorter( inpIt, sz, outIt, auxIt, pred);	
     }
 
-    // Convenience function to sort a range in a vector.
-template <typename T, typename IsLess>
-    void MergeSort(const T& begin, const T& end, IsLess is_less) 
+template < typename InpIt, typename OutIt> 
+    static auto	SplitSort( InpIt inpIt, uint32_t sz, OutIt outIt, OutIt auxIt)
     {
-        MergeSort(&*begin, &*end, is_less);
-    }
-
-    // Stable, non-recursive MergeSort.
-    // Resizes v to double size temporarily, and then changes it back. Memory may
-    // be wasted in b after the call because of that.
-template <typename T, typename IsLess>
-    void mergesort_consecutive(std::vector<T>* v, IsLess is_less) 
-    {
-        const SzType n = v->size();
-        if (n < 2) 
-            return;
-        v->resize(n << 1);  // Allocate temporary space.
-        MergeSort(v->data(), n, v->data() + n, is_less);
-        v->resize(n);
-    }
-};
+        typedef	decltype(*std::declval<InpIt>()) 	            DeRef;  
+        typedef typename std::remove_reference< DeRef>::type	Value; 
+        return SplitSort( inpIt, sz, outIt, auxIt, std::less< Value>());	
+    } 
+}; 
+  
+//_____________________________________________________________________________________________________________________________

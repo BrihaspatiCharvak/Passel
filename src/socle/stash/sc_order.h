@@ -1,51 +1,69 @@
-// sc_sorter.h -------------------------------------------------------------------------------------------------------------------
+// sc_order.h -------------------------------------------------------------------------------------------------------------------
 #pragma once
 
 //---------------------------------------------------------------------------------------------------------------------------------
 
-struct Sc_Sort
+struct Sc_MSort
 { 
 template < typename Cltn, typename SzType>
-	static auto IsKeyLess( void)	
+	static auto KeyAt( void)	
 	{
-		return []( const Cltn &cltn, SzType i,  SzType j) {
-			return cltn[ i] < cltn[ j];
+		return []( const Cltn &cltn, SzType i) {
+			return cltn[ i];
+		};
+	}
+
+template < typename Key>
+	static auto KeyLess( void)	
+	{
+		return []( const Key &a, const Key &b) {
+			return a < b;
 		};
 	}
 
 template < typename Cltn, typename SzType>
-	static auto KeyAssign( void)
+	static auto Assign( void)
 	{
 		return []( Cltn &cltn, SzType i, SzType j) {
 			return cltn[ i] = cltn[ j];
 		};
-	}
- 
-template <typename Cltn, typename IsKeyLess, typename AssignKey, typename SzType>
-	static void InsertionSort(  Cltn &cltn, SzType left, SzType right, const IsKeyLess  &keyLessFn, const AssignKey &assignKeyFn) 
-	{  
-		for ( SzType i = left+1; i <= right; i++) 
-		{  
-			SzType	j = i -1;  
-			while (( j >= left) && keyLessFn( cltn, i, j)) 
-			{ 
-				assignKeyFn( cltn, j +1, j); 
-				j = j-1; 
-			} 
-			assignKeyFn( cltn, j +1, i); 
+	} 
+
+template < typename Cltn, typename SzType, typename Key, typename KeyLessFn, typename KeyAtFn>
+	static SzType	LowerBound( const Cltn &cltn, SzType low, SzType high, const Key &key, const KeyAtFn  &keyAtFn, const KeyLessFn  &keyLessFn)
+	{
+		while ( low < high)
+		{
+			SzType	mid = (low +high)/2; 
+
+			if ( keyLessFn( keyAtFn( cltn, mid), key))
+				low = mid +1;
+			else
+				high = mid;
 		} 
-		return;
+		return low;
 	}
 
-template <typename Cltn, typename SzType>
-	static void InsertionSort(  Cltn &cltn, SzType left, SzType right) 
+template < typename Cltn, typename SzType, typename Key>
+	static SzType	LowerBound( const Cltn &cltn, SzType low, SzType high, const Key &key)
 	{
-		InsertionSort( cltn, left, right, IsKeyLess< Cltn, SzType>(), KeyAssign< Cltn, SzType>());
+		typedef decltype(  KeyAt< Cltn, SzType>()( cltn, 0))	KeyValue;
+		return LowerBound( cltn, low, high, KeyValue( key), KeyAt< Cltn, SzType>(), KeyLess< Key>());
+	}
+
+template < typename Cltn, typename SzType, typename Key>
+	static SzType	Insert( const Cltn &cltn, SzType low, SzType high, SzType oldLoc)
+	{
+		auto	keyAtFn = KeyAt< Cltn, SzType>();
+		SzType	loc = LowerBound( cltn, low, high, keyAtFn( oldLoc), KeyAt< Cltn, SzType>(), KeyLess< Key>());
+		if ( loc < oldLoc)
+
+
 	}
 };
 
 //---------------------------------------------------------------------------------------------------------------------------------
-//#ifdef ZERO
+#ifdef ZERO
 
 void swapValue(int *a, int *b) 
 { 
@@ -184,6 +202,5 @@ void printArray(int arr[], int n)
 for (int i=0; i < n; i++) 
 	printf("%d ", arr[i]); 
 printf("\n"); 
-} 
-
-//#endif
+}  
+#endif
