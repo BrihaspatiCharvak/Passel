@@ -55,11 +55,8 @@ template < typename OutIt, typename Pred >
             : m_Pred( pred), m_DataIt( dataIt), m_AuxIt( auxIt), m_Split( split), m_Size( sz)
         {}
 
-template < typename TaskQueue, typename ErrandId = typename TaskQueue::ErrandId>
-	    void    operator()( ErrandId succ, TaskQueue *queue) const
+        void    DoMerge( void)
         {
-            //CV_FNTRACE(())
-
             OutIt   data1End = m_DataIt + m_Split;
             OutIt   data2End = m_DataIt + m_Size;
 
@@ -72,12 +69,17 @@ template < typename TaskQueue, typename ErrandId = typename TaskQueue::ErrandId>
             for ( ; ( data1It < data1End); ++auxIt, ++data1It)
                 *auxIt = *data1It;
             for ( ; ( data2It < data2End); ++auxIt, ++data2It)
-                 *auxIt = *data2It;
+                *auxIt = *data2It;
 
             for ( OutIt dataIt = m_DataIt, auxIt = m_AuxIt; dataIt <  data2End; ++dataIt, ++auxIt)
                 *dataIt = *auxIt;
-             
+
             return;
+        }
+template < typename TaskQueue, typename ErrandId = typename TaskQueue::ErrandId>
+	    void    operator()( ErrandId succ, TaskQueue *queue) const
+        {
+            DoMerge(); 
         }   
     };
 
