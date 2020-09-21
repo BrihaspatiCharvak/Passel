@@ -6,7 +6,9 @@
 struct Sc_Order
 {  
     
-
+    //tex:
+    // Formula 1: $$(a+b)^2 = a^2 + 2ab + b^2$$
+    // Formula 2: $$a^2-b^2 = (a+b)(a-b)$$ 
     //_____________________________________________________________________________________________________________________________
 
 template < typename InpIt, typename OutIt, typename Pred > 
